@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from scipy import interpolate
-import os,time
+import os,time,math
 #%%
 def plot_data(energy,data,save_img=0,name='image'):
     fig,axs = plt.subplots()
@@ -46,31 +46,34 @@ def main(co,E,d,r,l,xv,denv,den,n):
     coeal,coecar,coenai = read_data()
     e = np.zeros([len(d),len(E)])
     eang = 1.0/(2*np.pi)
-    for dnum,dist in enumerate(d):
+    for dnum,dist in enumerate(d.astype(np.float)):
         for Enum,Et in enumerate(E):
             uventana=interpol(coeal,Et,2)
             udetector=interpol(coenai,Et)
             ec = np.zeros([n+1])
-            fi = np.array(range(n+1)).astype(np.float)
+            fi = np.arange(n+1)
             
             if co >= 0 and co <=r:
                 hfi = np.pi/n
-                fi *= hfi
+                fi = fi* hfi
                 for num,q in enumerate(fi):
-                    g = (co*np.cos(q)+np.sqrt(np.power(r,2)-np.power(co*np.sin(q),2)))
-                    a = np.arctan(g/(dist+l))
-                    b = np.arctan(g/dist)
+                    g = (co*math.cos(q)+(r**2-(co*math.sin(q))**2)**0.5)
+                    a = math.atan(g/(dist+l))
+                    if dist == 0:
+                        b = math.atan(np.inf)
+                    else:
+                        b = math.atan(g/dist)
                     e1 = 0
                     e2 = 0
                     if 0 < a:
                         h1=a/n
-                        te = np.array(range(n+1))*h1
+                        te = np.arange(n+1)*h1
                         x = np.divide(l,np.cos(te))
                         f1 =(1-np.exp(-udetector*den*x))*np.sin(te)*np.exp(np.divide(-uventana*denv*xv,np.cos(te)))
                         e1 = trapecio(f1,h1)
                     if a < b:
                         h2=(b-a)/n
-                        te = a+np.array(range(n+1))*h2
+                        te = a+np.arange(n+1)*h2
                         x = np.divide(g,np.sin(te))-np.divide(dist,np.cos(te))
                         f2 =(1-np.exp(-udetector*den*x))*np.sin(te)*np.exp(np.divide(-uventana*denv*xv,np.cos(te)))
                         e2 = trapecio(f2,h2)
@@ -78,31 +81,31 @@ def main(co,E,d,r,l,xv,denv,den,n):
                 e12 = trapecio(ec,hfi)
             
             else:
-                hfi = np.arccos(r/co)/n
-                fi *= hfi
+                hfi =math.acos(r/co)/n
+                fi = fi * hfi
                 for num,q in enumerate(fi):
-                    g = (co*np.cos(q)+np.sqrt(np.power(r,2)-np.power(co*np.sin(q),2)))
-                    g2 = (co*np.cos(q)-np.sqrt(np.power(r,2)-np.power(co*np.sin(q),2)))
-                    a = np.arctan(g2/dist)
-                    b = np.arctan(g/(dist+l))
-                    c = np.arctan(g/dist)
+                    g = (co*math.cos(q)+(r**2-(co*math.sin(q))**2)**0.5)
+                    g2 = (co*math.cos(q)-(r**2-(co*np.sin(q))**2)**0.5)
+                    a = math.atan(g2/dist)
+                    b = math.atan(g/(dist+l))
+                    c = math.atan(g/dist)
                     e1 = 0
                     e2 = 0
                     if a < b:
                         h1 = (b-a)/n
-                        te = a+np.array(range(n+1))*h1
+                        te = a+np.arange(n+1)*h1
                         x = np.divide(l,np.cos(te))
                         f1 =(1-np.exp(-udetector*den*x))*np.sin(te)*np.exp(np.divide(-uventana*denv*xv,np.cos(te)))
                         e1 = trapecio(f1,h1)
                     if b < c and a < b:
                         h2 = (c-b)/n
-                        te = b+np.array(range(n+1))*h2
+                        te = b+np.arange(n+1)*h2
                         x = np.divide(g,np.sin(te))-np.divide(dist,np.cos(te))
                         f2 =(1-np.exp(-udetector*den*x))*np.sin(te)*np.exp(np.divide(-uventana*denv*xv,np.cos(te)))
                         e2 = trapecio(f2,h2)
                     if a > b and a<c:
                         h2 = (c-a)/n
-                        te = b+np.array(range(n+1))*h2
+                        te = b+np.arange(n+1)*h2
                         x = np.divide(g,np.sin(te))-np.divide(dist,np.cos(te))
                         f2 =(1-np.exp(-udetector*den*x))*np.sin(te)*np.exp(np.divide(-uventana*denv*xv,np.cos(te)))
                         e2 = trapecio(f2,h2)
