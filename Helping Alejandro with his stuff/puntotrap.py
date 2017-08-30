@@ -30,7 +30,7 @@ def interpol(data_frame,value,column='Coef_fot'):
     return func(value)
 
 def trapecio(np_array,number):
-    return number*(np_array.sum()-(np_array[0]+np_array[len(np_array)-1])/2.)
+    return number*(np_array.sum()-(np_array[0]+np_array[-1])/2.)
 
 def read_data():
     for files in os.listdir(os.getcwd()):
@@ -46,6 +46,7 @@ def main(co,E,d,r,l,xv,denv,den,n):
     coeal,coecar,coenai = read_data()
     e = np.zeros([len(d),len(E)])
     eang = 1.0/(2*np.pi)
+    start_time = time.time()
     for dnum,dist in enumerate(d.astype(np.float)):
         for Enum,Et in enumerate(E):
             uventana=interpol(coeal,Et,2)
@@ -112,13 +113,12 @@ def main(co,E,d,r,l,xv,denv,den,n):
                     ec[num] = e1+e2
                 e12 = trapecio(ec,hfi)
             e[dnum][Enum]= e12*eang*100
+    print("--- {} seconds --- \n".format(round(time.time() - start_time,2)))
     return e
 
 #%%
 if __name__ == '__main__':
     E = np.arange(0.1,1.21,0.01)
     d = np.array([0,1,2,3])
-    start_time = time.time()
     a = main(0,E,d,2.54,5.08,0.0508,2.6984,3.67,128)
-    print("--- {} seconds --- \n".format(round(time.time() - start_time,2)))
     plot_data(E,a)
